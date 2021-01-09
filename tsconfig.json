@@ -1,25 +1,25 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
-        "target": "es6",
-        "outDir": "out",
-        "lib": [
-            "es6",
-            "dom"
-        ],
         "forceConsistentCasingInFileNames": true,
-        "sourceMap": true,
-        "rootDir": ".",
-        "strictNullChecks": true,
-        "noImplicitAny": true,
-        "suppressImplicitAnyIndexErrors": true,
+        "isolatedModules": true,
+        "lib": ["es2019"],
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "noEmit": false,
+        "noFallthroughCasesInSwitch": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        // "noImplicitAny": true,
+        "noImplicitThis": true,
         "alwaysStrict": true,
-        "noUnusedLocals": false,
-        "noUnusedParameters": false
+        "strictBindCallApply": true,
+        "strictNullChecks": true,
+        // "strictFunctionTypes": true,
+        // "strictPropertyInitialization": true,
+        "outDir": "out",
+        "rootDir": "src",
+        "sourceMap": true,
+        "target": "es2019"
     },
-    "exclude": [
-        "node_modules",
-        ".vscode-test",
-        "test/test_files"
-    ]
+    "exclude": ["node_modules", ".vscode-test"]
 }
