@@ -7,7 +7,6 @@ import LineState from "./lineState";
 import Settings from "./settings";
 import TextLine from "./textLine";
 import { ignoreBracketsInToken, LineTokens } from "./vscodeFiles";
-import { TextDocumentContentChangeEvent } from "vscode";
 
 export default class DocumentDecoration {
     public readonly settings: Settings;
@@ -19,11 +18,7 @@ export default class DocumentDecoration {
     private scopeDecorations: vscode.TextEditorDecorationType[] = [];
     private scopeSelectionHistory: vscode.Selection[][] = [];
 
-    constructor(
-        document: vscode.TextDocument,
-        config: LanguageConfig,
-        settings: Settings,
-    ) {
+    constructor(document: vscode.TextDocument, config: LanguageConfig, settings: Settings) {
         this.settings = settings;
         this.document = document;
         this.languageConfig = config;
@@ -33,7 +28,7 @@ export default class DocumentDecoration {
         this.disposeScopeDecorations();
     }
 
-    public onDidChangeTextDocument(contentChanges: ReadonlyArray<TextDocumentContentChangeEvent>) {
+    public onDidChangeTextDocument(contentChanges: readonly vscode.TextDocumentContentChangeEvent[]) {
         if (contentChanges.length > 1 || !contentChanges[0].range.isSingleLine || contentChanges[0].text.length > 1) {
             let minLineIndexToUpdate = 0;
             for (const contentChange of contentChanges) {
@@ -42,8 +37,7 @@ export default class DocumentDecoration {
 
             if (minLineIndexToUpdate === 0) {
                 this.lines = [];
-            }
-            else {
+            } else {
                 this.lines.splice(minLineIndexToUpdate);
             }
             this.tokenizeDocument();
@@ -115,12 +109,9 @@ export default class DocumentDecoration {
     public getLine(index: number, state: IStackElement): TextLine {
         if (index < this.lines.length) {
             return this.lines[index];
-        }
-        else {
+        } else {
             if (this.lines.length === 0) {
-                this.lines.push(
-                    new TextLine(state, new LineState(this.settings, this.languageConfig), 0),
-                );
+                this.lines.push(new TextLine(state, new LineState(this.settings, this.languageConfig), 0));
             }
 
             if (index < this.lines.length) {
@@ -129,8 +120,7 @@ export default class DocumentDecoration {
 
             if (index === this.lines.length) {
                 const previousLine = this.lines[this.lines.length - 1];
-                const newLine =
-                    new TextLine(state, previousLine.cloneState(), index);
+                const newLine = new TextLine(state, previousLine.cloneState(), index);
 
                 this.lines.push(newLine);
                 return newLine;
@@ -144,8 +134,9 @@ export default class DocumentDecoration {
         // console.log("Tokenizing " + this.document.fileName);
 
         // One document may be shared by multiple editors (side by side view)
-        const editors: vscode.TextEditor[] =
-            vscode.window.visibleTextEditors.filter((e) => this.document === e.document);
+        const editors: vscode.TextEditor[] = vscode.window.visibleTextEditors.filter(
+            (e) => this.document === e.document
+        );
 
         if (editors.length === 0) {
             // console.warn("No editors associated with document: " + this.document.fileName);
@@ -191,49 +182,51 @@ export default class DocumentDecoration {
         const endLineIndex = closeBracket.token.range.start.line;
 
         if (this.settings.highlightActiveScope) {
-            const decoration =
-                this.settings.createScopeBracketDecorations(closeBracket.color);
+            const decoration = this.settings.createScopeBracketDecorations(closeBracket.color);
             event.textEditor.setDecorations(decoration, [beginRange, endRange]);
             this.scopeDecorations.push(decoration);
         }
 
         if (this.settings.showBracketsInGutter) {
             if (startLineIndex === endLineIndex) {
-                const decoration = this.settings.createGutterBracketDecorations
-                    (closeBracket.color, openBracket.token.character + closeBracket.token.character);
+                const decoration = this.settings.createGutterBracketDecorations(
+                    closeBracket.color,
+                    openBracket.token.character + closeBracket.token.character
+                );
                 event.textEditor.setDecorations(decoration, [beginRange, endRange]);
                 this.scopeDecorations.push(decoration);
-            }
-            else {
-                const decorationOpen =
-                    this.settings.createGutterBracketDecorations(openBracket.color, openBracket.token.character);
+            } else {
+                const decorationOpen = this.settings.createGutterBracketDecorations(
+                    openBracket.color,
+                    openBracket.token.character
+                );
                 event.textEditor.setDecorations(decorationOpen, [beginRange]);
                 this.scopeDecorations.push(decorationOpen);
-                const decorationClose =
-                    this.settings.createGutterBracketDecorations(closeBracket.color, closeBracket.token.character);
+                const decorationClose = this.settings.createGutterBracketDecorations(
+                    closeBracket.color,
+                    closeBracket.token.character
+                );
                 event.textEditor.setDecorations(decorationClose, [endRange]);
                 this.scopeDecorations.push(decorationClose);
             }
         }
 
         if (this.settings.showBracketsInRuler) {
-            const decoration =
-                this.settings.createRulerBracketDecorations(closeBracket.color);
+            const decoration = this.settings.createRulerBracketDecorations(closeBracket.color);
             event.textEditor.setDecorations(decoration, [beginRange, endRange]);
             this.scopeDecorations.push(decoration);
         }
 
-        const lastWhiteSpaceCharacterIndex =
-            this.document.lineAt(endRange.start).firstNonWhitespaceCharacterIndex;
+        const lastWhiteSpaceCharacterIndex = this.document.lineAt(endRange.start).firstNonWhitespaceCharacterIndex;
         const lastBracketStartIndex = endRange.start.character;
         const lastBracketIsFirstCharacterOnLine = lastWhiteSpaceCharacterIndex === lastBracketStartIndex;
         let leftBorderColumn = Infinity;
 
         const tabSize = event.textEditor.options.tabSize as number;
 
-        const position =
-            this.settings.scopeLineRelativePosition ?
-                Math.min(endRange.start.character, beginRange.start.character) : 0;
+        const position = this.settings.scopeLineRelativePosition
+            ? Math.min(endRange.start.character, beginRange.start.character)
+            : 0;
 
         let leftBorderIndex = position;
 
@@ -247,19 +240,23 @@ export default class DocumentDecoration {
             if (!line.isEmptyOrWhitespace) {
                 const firstCharIndex = line.firstNonWhitespaceCharacterIndex;
                 leftBorderIndex = Math.min(leftBorderIndex, firstCharIndex);
-                leftBorderColumn = Math.min(leftBorderColumn,
-                    this.calculateColumnFromCharIndex(line.text, firstCharIndex, tabSize));
+                leftBorderColumn = Math.min(
+                    leftBorderColumn,
+                    this.calculateColumnFromCharIndex(line.text, firstCharIndex, tabSize)
+                );
             }
         }
 
         if (this.settings.showVerticalScopeLine) {
-            const verticalLineRanges: Array<{ range: vscode.Range, valid: boolean }> = [];
+            const verticalLineRanges: { range: vscode.Range; valid: boolean }[] = [];
 
             const endOffset = lastBracketIsFirstCharacterOnLine ? end - 1 : end;
             for (let lineIndex = start; lineIndex <= endOffset; lineIndex++) {
                 const line = this.document.lineAt(lineIndex);
-                const linePosition = new vscode.Position(lineIndex,
-                    this.calculateCharIndexFromColumn(line.text, leftBorderColumn, tabSize));
+                const linePosition = new vscode.Position(
+                    lineIndex,
+                    this.calculateCharIndexFromColumn(line.text, leftBorderColumn, tabSize)
+                );
                 const range = new vscode.Range(linePosition, linePosition);
                 const valid = line.text.length >= leftBorderIndex;
                 verticalLineRanges.push({ range, valid });
@@ -275,21 +272,23 @@ export default class DocumentDecoration {
 
             if (startLineIndex === endLineIndex) {
                 underlineLineRanges.push(new vscode.Range(beginRange.start, endRange.end));
-            }
-            else {
+            } else {
                 const startTextLine = this.document.lineAt(startLineIndex);
                 const endTextLine = this.document.lineAt(endLineIndex);
 
-                const leftStartPos = new vscode.Position(beginRange.start.line,
-                    this.calculateCharIndexFromColumn(startTextLine.text, leftBorderColumn, tabSize));
-                const leftEndPos = new vscode.Position(endRange.start.line,
-                    this.calculateCharIndexFromColumn(endTextLine.text, leftBorderColumn, tabSize));
+                const leftStartPos = new vscode.Position(
+                    beginRange.start.line,
+                    this.calculateCharIndexFromColumn(startTextLine.text, leftBorderColumn, tabSize)
+                );
+                const leftEndPos = new vscode.Position(
+                    endRange.start.line,
+                    this.calculateCharIndexFromColumn(endTextLine.text, leftBorderColumn, tabSize)
+                );
 
                 underlineLineRanges.push(new vscode.Range(leftStartPos, beginRange.end));
                 if (lastBracketIsFirstCharacterOnLine) {
                     overlineLineRanges.push(new vscode.Range(leftEndPos, endRange.end));
-                }
-                else {
+                } else {
                     underlineLineRanges.push(new vscode.Range(leftEndPos, endRange.end));
                 }
             }
@@ -308,19 +307,16 @@ export default class DocumentDecoration {
 
     private tokenizeLine(index: number) {
         const newText = this.document.lineAt(index).text;
-        const previousLineRuleStack = index > 0 ?
-            this.lines[index - 1].getRuleStack() :
-            undefined;
+        const previousLineRuleStack = index > 0 ? this.lines[index - 1].getRuleStack() : undefined;
 
-        const previousLineState = index > 0 ?
-            this.lines[index - 1].cloneState() :
-            new LineState(this.settings, this.languageConfig);
+        const previousLineState =
+            index > 0 ? this.lines[index - 1].cloneState() : new LineState(this.settings, this.languageConfig);
 
         const tokenized = this.languageConfig.grammar.tokenizeLine2(newText, previousLineRuleStack);
         const tokens = tokenized.tokens;
         const lineTokens = new LineTokens(tokens, newText);
 
-        const matches = new Array<{ content: string, index: number }>();
+        const matches = new Array<{ content: string; index: number }>();
         const count = lineTokens.getCount();
         for (let i = 0; i < count; i++) {
             const tokenType = lineTokens.getStandardTokenType(i);
@@ -331,7 +327,7 @@ export default class DocumentDecoration {
                 const currentTokenText = newText.substring(searchStartOffset, searchEndOffset);
 
                 let result: RegExpExecArray | null;
-                // tslint:disable-next-line:no-conditional-assignment
+                // eslint-disable-next-line no-cond-assign
                 while ((result = this.languageConfig.regex.exec(currentTokenText)) !== null) {
                     matches.push({ content: result[0], index: result.index + searchStartOffset });
                 }
@@ -342,7 +338,7 @@ export default class DocumentDecoration {
         for (const match of matches) {
             const lookup = this.languageConfig.bracketToId.get(match.content);
             if (lookup) {
-                newLine.AddToken(match.content, match.index, lookup.key, lookup.open);
+                newLine.addToken(match.content, match.index, lookup.key, lookup.open);
             }
         }
         return newLine;
@@ -351,7 +347,8 @@ export default class DocumentDecoration {
     private setOverLineDecoration(
         bracket: Bracket,
         event: vscode.TextEditorSelectionChangeEvent,
-        overlineLineRanges: vscode.Range[]) {
+        overlineLineRanges: vscode.Range[]
+    ) {
         const lineDecoration = this.settings.createScopeLineDecorations(bracket.color, true, false, false, false);
         event.textEditor.setDecorations(lineDecoration, overlineLineRanges);
         this.scopeDecorations.push(lineDecoration);
@@ -360,7 +357,8 @@ export default class DocumentDecoration {
     private setUnderLineDecoration(
         bracket: Bracket,
         event: vscode.TextEditorSelectionChangeEvent,
-        underlineLineRanges: vscode.Range[]) {
+        underlineLineRanges: vscode.Range[]
+    ) {
         const lineDecoration = this.settings.createScopeLineDecorations(bracket.color, false, false, true, false);
         event.textEditor.setDecorations(lineDecoration, underlineLineRanges);
         this.scopeDecorations.push(lineDecoration);
@@ -370,10 +368,9 @@ export default class DocumentDecoration {
         bracket: Bracket,
         event: vscode.TextEditorSelectionChangeEvent,
         fallBackPosition: vscode.Position,
-        verticalLineRanges: Array<{ range: vscode.Range, valid: boolean }>,
+        verticalLineRanges: { range: vscode.Range; valid: boolean }[]
     ) {
-        const offsets:
-            Array<{ range: vscode.Range, downOffset: number }> = [];
+        const offsets: { range: vscode.Range; downOffset: number }[] = [];
         const normalDecoration = this.settings.createScopeLineDecorations(bracket.color, false, false, false, true);
 
         if (verticalLineRanges.length === 0) {
@@ -396,8 +393,7 @@ export default class DocumentDecoration {
         for (const lineRange of verticalLineRanges) {
             if (lineRange.valid) {
                 aboveValidRange = lineRange.range;
-            }
-            else {
+            } else {
                 const offset = lineRange.range.start.line - aboveValidRange.start.line;
                 offsets.push({ range: aboveValidRange, downOffset: offset });
             }
@@ -408,7 +404,12 @@ export default class DocumentDecoration {
 
         offsets.forEach((offset) => {
             const decoration = this.settings.createScopeLineDecorations(
-                bracket.color, false, false, false, true, offset.downOffset,
+                bracket.color,
+                false,
+                false,
+                false,
+                true,
+                offset.downOffset
             );
             event.textEditor.setDecorations(decoration, [offset.range]);
             this.scopeDecorations.push(decoration);
@@ -444,11 +445,8 @@ export default class DocumentDecoration {
                 for (const bracket of brackets) {
                     const existingRanges = colorMap.get(bracket.color);
                     if (existingRanges !== undefined) {
-
                         existingRanges.push(bracket.token.range);
-                    }
-                    else {
-
+                    } else {
                         colorMap.set(bracket.color, [bracket.token.range]);
                     }
                 }
@@ -463,8 +461,7 @@ export default class DocumentDecoration {
             for (const editor of editors) {
                 if (ranges !== undefined) {
                     editor.setDecorations(decoration, ranges);
-                }
-                else {
+                } else {
                     // We must set non-used colors to an empty array
                     // or previous decorations will not be invalidated
                     editor.setDecorations(decoration, []);
@@ -479,9 +476,8 @@ export default class DocumentDecoration {
         let spacing = 0;
         for (let index = 0; index < charIndex; index++) {
             if (lineText.charAt(index) === "\t") {
-                spacing += tabSize - spacing % tabSize;
-            }
-            else {
+                spacing += tabSize - (spacing % tabSize);
+            } else {
                 spacing++;
             }
         }
@@ -495,9 +491,10 @@ export default class DocumentDecoration {
                 return index;
             }
             if (lineText.charAt(index) === "\t") {
-                spacing += tabSize - spacing % tabSize;
+                spacing += tabSize - (spacing % tabSize);
+            } else {
+                spacing++;
             }
-            else { spacing++; }
         }
         return spacing;
     }

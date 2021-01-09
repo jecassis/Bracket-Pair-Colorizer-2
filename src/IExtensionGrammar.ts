@@ -6,7 +6,6 @@ export interface IExtensionGrammar {
 
 export interface IExtensionPackage {
     contributes?: {
-        // tslint:disable-next-line:array-type
         languages?: {
             id: string;
             configuration: string;

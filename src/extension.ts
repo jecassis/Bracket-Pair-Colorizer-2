@@ -1,28 +1,33 @@
-import { commands, ExtensionContext, window, workspace, extensions } from "vscode";
+import { window, workspace, commands, extensions, ExtensionContext } from "vscode";
 import DocumentDecorationManager from "./documentDecorationManager";
+
 export function activate(context: ExtensionContext) {
     let documentDecorationManager = new DocumentDecorationManager();
 
     extensions.onDidChange(() => restart());
-    
+
     context.subscriptions.push(
         commands.registerCommand("bracket-pair-colorizer-2.expandBracketSelection", () => {
             const editor = window.activeTextEditor;
-            if (!editor) { return; }
+            if (!editor) {
+                return;
+            }
             documentDecorationManager.expandBracketSelection(editor);
         }),
 
         commands.registerCommand("bracket-pair-colorizer-2.undoBracketSelection", () => {
             const editor = window.activeTextEditor;
-            if (!editor) { return; }
+            if (!editor) {
+                return;
+            }
             documentDecorationManager.undoBracketSelection(editor);
         }),
 
         workspace.onDidChangeConfiguration((event) => {
-            if (event.affectsConfiguration("bracket-pair-colorizer-2") ||
+            if (
+                event.affectsConfiguration("bracket-pair-colorizer-2") ||
                 event.affectsConfiguration("editor.lineHeight") ||
                 event.affectsConfiguration("editor.fontSize")
-
             ) {
                 restart();
             }
@@ -44,18 +49,17 @@ export function activate(context: ExtensionContext) {
         }),
         window.onDidChangeTextEditorSelection((event) => {
             documentDecorationManager.onDidChangeSelection(event);
-        }),
+        })
     );
 
     documentDecorationManager.updateAllDocuments();
 
     function restart() {
-        documentDecorationManager.Dispose();
+        documentDecorationManager.dispose();
         documentDecorationManager = new DocumentDecorationManager();
         documentDecorationManager.updateAllDocuments();
     }
 }
 
-// tslint:disable-next-line:no-empty
-export function deactivate() {
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+export function deactivate() {}

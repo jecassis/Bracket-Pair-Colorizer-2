@@ -1,9 +1,9 @@
 import * as path from "path";
 import * as vscode from "vscode";
 import { IExtensionPackage, IGrammar } from "./IExtensionGrammar";
-import fs = require("fs");
+import * as fs from "fs";
 import { getRegexForBrackets } from "./bracketUtil";
-import JSON5 = require("json5");
+import * as JSON5 from "json5";
 import LanguageConfig from "./languageConfig";
 
 export class TextMateLoader {
@@ -54,10 +54,9 @@ export class TextMateLoader {
             }
 
             const registry = new this.vsctm.Registry({
-                // tslint:disable-next-line:object-literal-shorthand
                 onigLib: Promise.resolve({
                     createOnigScanner: (sources: string[]) => new this.oniguruma.OnigScanner(sources),
-                    createOnigString: (str: string) => new this.oniguruma.OnigString(str)
+                    createOnigString: (str: string) => new this.oniguruma.OnigString(str),
                 }),
                 loadGrammar: (scopeName: string) => {
                     const path = this.scopeNameToPath.get(scopeName);
@@ -80,18 +79,19 @@ export class TextMateLoader {
             });
 
             // Load the JavaScript grammar and any other grammars included by it async.
+            // prettier-ignore
             return (registry.loadGrammarWithConfiguration(scopeName, this.languageId++, {}) as Thenable<IGrammar | undefined | null>).then((grammar) => {
                 if (grammar) {
                     if (!this.languageConfigs.has(languageID)) {
-                        const mappedBrackets = brackets.map((b) => ({ open: b[0], close: b[1] }))
+                        const mappedBrackets = brackets
+                            .map((b) => ({ open: b[0], close: b[1] }))
                             .filter((e) => e.open !== "<" && e.close !== ">");
 
-                        if (mappedBrackets.length === 0)
-                        {
+                        if (mappedBrackets.length === 0) {
                             return;
                         }
 
-                        const bracketToId = new Map<string, { open: boolean, key: number }>();
+                        const bracketToId = new Map<string, { open: boolean; key: number }>();
                         for (let i = 0; i < brackets.length; i++) {
                             const bracket = brackets[i];
                             bracketToId.set(bracket[0], { open: true, key: i });
@@ -114,7 +114,7 @@ export class TextMateLoader {
     }
 
     private getNodeModulePath(moduleName: string) {
-        return path.join(vscode.env.appRoot, 'node_modules.asar', moduleName);
+        return path.join(vscode.env.appRoot, "node_modules.asar", moduleName);
     }
 
     private getNodeModule(moduleName: string) {
@@ -127,7 +127,7 @@ export class TextMateLoader {
 
     private loadOniguruma(): any {
         const oniguruma = this.getNodeModule("vscode-oniguruma");
-        const wasmPath = path.join(this.getNodeModulePath("vscode-oniguruma"), 'release', 'onig.wasm');
+        const wasmPath = path.join(this.getNodeModulePath("vscode-oniguruma"), "release", "onig.wasm");
         const onigurumaWasm = fs.readFileSync(wasmPath).buffer;
         oniguruma.loadWASM(onigurumaWasm);
         return oniguruma;

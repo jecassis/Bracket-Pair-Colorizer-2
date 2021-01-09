@@ -15,25 +15,30 @@ export default class LineState {
     private readonly settings: Settings;
     private readonly languageConfig: LanguageConfig;
 
-    constructor(settings: Settings, languageConfig: LanguageConfig, previousState?:
-        {
+    constructor(
+        settings: Settings,
+        languageConfig: LanguageConfig,
+        previousState?: {
             readonly colorIndexes: IBracketManager;
             readonly previousBracketColor: string;
-        }) {
+        }
+    ) {
         this.settings = settings;
         this.languageConfig = languageConfig;
 
         if (previousState !== undefined) {
             this.bracketManager = previousState.colorIndexes;
             this.previousBracketColor = previousState.previousBracketColor;
-        }
-        else {
+        } else {
             switch (settings.colorMode) {
-                case ColorMode.Consecutive: this.bracketManager = new SingularBracketGroup(settings);
+                case ColorMode.Consecutive:
+                    this.bracketManager = new SingularBracketGroup(settings);
                     break;
-                case ColorMode.Independent: this.bracketManager = new MultipleBracketGroups(settings, languageConfig);
+                case ColorMode.Independent:
+                    this.bracketManager = new MultipleBracketGroups(settings, languageConfig);
                     break;
-                default: throw new RangeError("Not implemented enum value");
+                default:
+                    throw new RangeError("Not implemented enum value");
             }
         }
     }
@@ -43,8 +48,7 @@ export default class LineState {
     }
 
     public cloneState(): LineState {
-        const clone =
-        {
+        const clone = {
             colorIndexes: this.bracketManager.copyCumulativeState(),
             previousBracketColor: this.previousBracketColor,
         };
@@ -65,13 +69,12 @@ export default class LineState {
         character: string,
         beginIndex: number,
         lineIndex: number,
-        open: boolean,
+        open: boolean
     ) {
         const token = new Token(type, character, beginIndex, lineIndex);
         if (open) {
             this.addOpenBracket(token);
-        }
-        else {
+        } else {
             this.addCloseBracket(token);
         }
     }
@@ -85,9 +88,8 @@ export default class LineState {
 
         if (this.settings.forceIterationColorCycle) {
             colorIndex = (this.bracketManager.getPreviousIndex(token.type) + 1) % this.settings.colors.length;
-        }
-        else {
-            colorIndex = this.bracketManager.GetAmountOfOpenBrackets(token.type) % this.settings.colors.length;
+        } else {
+            colorIndex = this.bracketManager.getAmountOfOpenBrackets(token.type) % this.settings.colors.length;
         }
 
         let color = this.settings.colors[colorIndex];
@@ -99,7 +101,7 @@ export default class LineState {
 
         this.previousBracketColor = color;
         this.bracketManager.addOpenBracket(token, colorIndex);
-    };
+    }
 
     private addCloseBracket(token: Token) {
         this.bracketManager.addCloseBracket(token);

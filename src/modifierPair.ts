@@ -12,7 +12,7 @@ export default class ModifierPair {
         }
     }
 
-    public Clone() {
+    public clone() {
         return new ModifierPair(this.openingCharacter, this.closingCharacter, this.counter);
     }
 }

@@ -4,7 +4,7 @@ interface ISimpleInternalBracket {
 }
 
 export function getRegexForBrackets(input: ISimpleInternalBracket[]): RegExp {
-    const longestFirst = input.sort((a, b) => (b.open.length + b.close.length) - (a.open.length + a.close.length));
+    const longestFirst = input.sort((a, b) => b.open.length + b.close.length - (a.open.length + a.close.length));
     const pieces: string[] = [];
     longestFirst.forEach((b) => {
         pieces.push(b.open);
@@ -20,9 +20,9 @@ function createBracketOrRegExp(pieces: string[]): RegExp {
 
 function prepareBracketForRegExp(str: string): string {
     // This bracket pair uses letters like e.g. "begin" - "end"
-    const insertWordBoundaries = (/^[\w]+$/.test(str));
+    const insertWordBoundaries = /^[\w]+$/.test(str);
     str = escapeRegExpCharacters(str);
-    return (insertWordBoundaries ? `\\b${str}\\b` : str);
+    return insertWordBoundaries ? `\\b${str}\\b` : str;
 }
 
 function escapeRegExpCharacters(value: string): string {
@@ -58,7 +58,7 @@ function createRegExp(searchString: string, isRegex: boolean, options: RegExpOpt
     return new RegExp(searchString, modifiers);
 }
 
-// tslint:disable-next-line:interface-name
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface RegExpOptions {
     matchCase?: boolean;
     wholeWord?: boolean;

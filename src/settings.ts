@@ -2,10 +2,9 @@ import * as vscode from "vscode";
 import ColorMode from "./colorMode";
 import GutterIconManager from "./gutterIconManager";
 import TextMateLoader from "./textMateLoader";
-import { ThemeColor } from "vscode";
 
 export default class Settings {
-    public readonly TextMateLoader = new TextMateLoader();
+    public readonly textMateLoader = new TextMateLoader();
     public readonly bracketDecorations: Map<string, vscode.TextEditorDecorationType>;
     public readonly colorMode: ColorMode;
     public readonly contextualParsing: boolean;
@@ -28,9 +27,8 @@ export default class Settings {
     private readonly activeScopeLineCSSElements: string[][];
     private readonly activeScopeLineCSSBorder: string;
     private readonly rulerPosition: string;
-    constructor(
-    ) {
-        const workspaceColors = vscode.workspace.getConfiguration("workbench.colorCustomizations", undefined);
+    constructor() {
+        // const workspaceColors = vscode.workspace.getConfiguration("workbench.colorCustomizations", undefined);
         this.gutterIcons = new GutterIconManager();
 
         const configuration = vscode.workspace.getConfiguration("bracket-pair-colorizer-2", undefined);
@@ -40,9 +38,10 @@ export default class Settings {
             throw new Error("activeScopeCSS is not an array");
         }
 
-        this.activeBracketCSSElements = activeScopeCSS.map((e) =>
-            [e.substring(0, e.indexOf(":")).trim(),
-            e.substring(e.indexOf(":") + 1).trim()]);
+        this.activeBracketCSSElements = activeScopeCSS.map((e) => [
+            e.substring(0, e.indexOf(":")).trim(),
+            e.substring(e.indexOf(":") + 1).trim(),
+        ]);
 
         const scopeLineCSS = configuration.get("scopeLineCSS") as string[];
 
@@ -50,15 +49,15 @@ export default class Settings {
             throw new Error("scopeLineCSS is not an array");
         }
 
-        this.activeScopeLineCSSElements = scopeLineCSS.map((e) =>
-            [e.substring(0, e.indexOf(":")).trim(),
-            e.substring(e.indexOf(":") + 1).trim()]);
+        this.activeScopeLineCSSElements = scopeLineCSS.map((e) => [
+            e.substring(0, e.indexOf(":")).trim(),
+            e.substring(e.indexOf(":") + 1).trim(),
+        ]);
 
         const borderStyle = this.activeScopeLineCSSElements.filter((e) => e[0] === "borderStyle");
         if (borderStyle && borderStyle[0].length === 2) {
             this.activeScopeLineCSSBorder = borderStyle[0][1];
-        }
-        else {
+        } else {
             this.activeScopeLineCSSBorder = "none";
         }
 
@@ -150,13 +149,13 @@ export default class Settings {
                 decoration.dispose();
             });
             this.bracketDecorations.clear();
-            this.gutterIcons.Dispose();
+            this.gutterIcons.dispose();
             this.isDisposed = true;
         }
     }
 
     public createGutterBracketDecorations(color: string, bracket: string) {
-        const gutterIcon = this.gutterIcons.GetIconUri(bracket, color);
+        const gutterIcon = this.gutterIcons.getIconUri(bracket, color);
         const decorationSettings: vscode.DecorationRenderOptions = {
             gutterIconPath: gutterIcon,
         };
@@ -166,7 +165,7 @@ export default class Settings {
 
     public createRulerBracketDecorations(color: string) {
         const decorationSettings: vscode.DecorationRenderOptions = {
-            overviewRulerColor: color.includes(".") ? new ThemeColor(color) : color,
+            overviewRulerColor: color.includes(".") ? new vscode.ThemeColor(color) : color,
             overviewRulerLane: vscode.OverviewRulerLane[this.rulerPosition],
         };
         const decoration = vscode.window.createTextEditorDecorationType(decorationSettings);
@@ -184,24 +183,22 @@ export default class Settings {
             const value = element[1];
             if (key.includes("Color")) {
                 const cssColor = value.replace("{color}", color);
-                decorationSettings[key] = cssColor.includes(".") ? new ThemeColor(cssColor) : cssColor;
+                decorationSettings[key] = cssColor.includes(".") ? new vscode.ThemeColor(cssColor) : cssColor;
                 continue;
             }
 
             if (key === "opacity") {
                 opacity = value;
-            }
-            else {
+            } else {
                 decorationSettings[key] = value;
             }
-        };
-
-        let borderColorType = typeof (decorationSettings["backgroundColor"]);
-        if (borderColorType === "undefined") {
-            decorationSettings["backgroundColor"] = "; opacity: " + opacity;
         }
-        else if (borderColorType === "string") {
-            decorationSettings["backgroundColor"] += "; opacity: " + opacity;
+
+        const borderColorType = typeof decorationSettings.backgroundColor;
+        if (borderColorType === "undefined") {
+            decorationSettings.backgroundColor = "; opacity: " + opacity;
+        } else if (borderColorType === "string") {
+            decorationSettings.backgroundColor += "; opacity: " + opacity;
         }
 
         const decoration = vscode.window.createTextEditorDecorationType(decorationSettings);
@@ -209,7 +206,13 @@ export default class Settings {
     }
 
     public createScopeLineDecorations(
-        color: string, top = true, right = true, bottom = true, left = true, yOffset?: number) {
+        color: string,
+        top = true,
+        right = true,
+        bottom = true,
+        left = true,
+        yOffset?: number
+    ) {
         const decorationSettings: vscode.DecorationRenderOptions = {
             rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
         };
@@ -226,24 +229,22 @@ export default class Settings {
             const value = element[1];
             if (key.includes("Color")) {
                 const cssColor = value.replace("{color}", color);
-                decorationSettings[key] = cssColor.includes(".") ? new ThemeColor(cssColor) : cssColor;
+                decorationSettings[key] = cssColor.includes(".") ? new vscode.ThemeColor(cssColor) : cssColor;
                 continue;
             }
 
             if (key === "opacity") {
                 opacity = value;
-            }
-            else {
+            } else {
                 decorationSettings[key] = value;
             }
         }
 
-        let borderColorType = typeof (decorationSettings["borderColor"]);
+        const borderColorType = typeof decorationSettings.borderColor;
         if (borderColorType === "undefined") {
-            decorationSettings["borderColor"] = "; opacity: " + opacity;
-        }
-        else if (borderColorType === "string") {
-            decorationSettings["borderColor"] += "; opacity: " + opacity;
+            decorationSettings.borderColor = "; opacity: " + opacity;
+        } else if (borderColorType === "string") {
+            decorationSettings.borderColor += "; opacity: " + opacity;
         }
 
         let borderStyle = `${topBorder} ${rightBorder} ${botBorder} ${leftBorder}`;
@@ -252,7 +253,7 @@ export default class Settings {
             borderStyle += "; transform: translateY(" + yOffset * 100 + "%); z-index: 1;";
         }
 
-        // tslint:disable-next-line:no-string-literal
+        // eslint-disable-next-line @typescript-eslint/dot-notation
         decorationSettings["borderStyle"] = borderStyle;
 
         const decoration = vscode.window.createTextEditorDecorationType(decorationSettings);
@@ -264,14 +265,15 @@ export default class Settings {
 
         for (const color of this.colors) {
             const decoration = vscode.window.createTextEditorDecorationType({
-                color: color.includes(".") ? new ThemeColor(color) : color,
+                color: color.includes(".") ? new vscode.ThemeColor(color) : color,
                 rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
             });
             decorations.set(color, decoration);
         }
 
         const unmatchedDecoration = vscode.window.createTextEditorDecorationType({
-            color: this.unmatchedScopeColor, rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
+            color: this.unmatchedScopeColor,
+            rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
         });
         decorations.set(this.unmatchedScopeColor, unmatchedDecoration);
 
