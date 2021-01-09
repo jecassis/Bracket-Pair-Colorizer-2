@@ -338,7 +338,7 @@ export default class DocumentDecoration {
         for (const match of matches) {
             const lookup = this.languageConfig.bracketToId.get(match.content);
             if (lookup) {
-                newLine.addToken(match.content, match.index, lookup.key, lookup.open);
+                newLine.addToken(match.content, match.index, lookup.key, lookup.open, lookup.pairsWith);
             }
         }
         return newLine;

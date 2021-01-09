@@ -28,8 +28,8 @@ export default class TextLine {
         return this.lineState.getBracketHash();
     }
 
-    public addToken(currentChar: string, index: number, key: number, open: boolean) {
-        this.lineState.addBracket(key, currentChar, index, this.index, open);
+    public addToken(currentChar: string, index: number, key: number, open: boolean, pairsWith: number[]) {
+        this.lineState.addBracket(key, currentChar, index, this.index, open, pairsWith);
     }
 
     public getClosingBracket(position: Position): BracketClose | undefined {

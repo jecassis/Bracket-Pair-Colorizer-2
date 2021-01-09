@@ -69,9 +69,10 @@ export default class LineState {
         character: string,
         beginIndex: number,
         lineIndex: number,
-        open: boolean
+        open: boolean,
+        pairsWith: number[]
     ) {
-        const token = new Token(type, character, beginIndex, lineIndex);
+        const token = new Token(type, character, beginIndex, lineIndex, pairsWith);
         if (open) {
             this.addOpenBracket(token);
         } else {
